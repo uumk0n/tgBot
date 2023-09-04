@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,6 +15,14 @@ import (
 	"google.golang.org/api/googleapi/transport"
 	"google.golang.org/api/youtube/v3"
 )
+
+type BotConfig struct {
+	APIKey      string `json:"apiKey"`
+	ChannelID   string `json:"channelID"`
+	BotToken    string `json:"botToken"`
+	TgLink      string `json:"tgLink"`
+	YouTubeLink string `json:"youTubeLink"`
+}
 
 func getBot() (*tgbotapi.BotAPI, *BotConfig) {
 	filePath := "config.json"
@@ -57,6 +66,23 @@ func readBotConfig(filePath string) *BotConfig {
 	}
 
 	return &config
+}
+
+func runBot(bot *tgbotapi.BotAPI, config *BotConfig) error {
+	defer func() {
+		if r := recover(); r != nil {
+			err := writeToClickHouse("Bot is stopping...")
+
+			if err != nil {
+				log.Printf("Error writing log to ClickHouse: %v", err)
+			}
+			os.Exit(1)
+		}
+	}()
+
+	handleUpdates(bot, config)
+
+	return nil
 }
 
 func searchVideos(query string, config *BotConfig) *youtube.SearchListResponse {

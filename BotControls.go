@@ -32,7 +32,7 @@ func handleUpdates(bot *tgbotapi.BotAPI, config *BotConfig) {
 		if update.Message != nil && update.Message.IsCommand() {
 			switch update.Message.Command() {
 			case "start":
-				handleStart(update, bot, true)
+				handleStart(update, bot)
 			}
 		} else if update.Message != nil && update.Message.Text == "Список соцсетей" {
 			handleSocialMedia(update, bot, config)
@@ -48,7 +48,7 @@ func handleUpdates(bot *tgbotapi.BotAPI, config *BotConfig) {
 	writeToClickHouse(logmsg)
 }
 
-func handleStart(update tgbotapi.Update, bot *tgbotapi.BotAPI, sendGreeting bool) {
+func handleStart(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	replyMarkup := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("Список соцсетей"),
@@ -56,12 +56,11 @@ func handleStart(update tgbotapi.Update, bot *tgbotapi.BotAPI, sendGreeting bool
 		),
 	)
 
-	if sendGreeting {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Привет! Я PruKon_Bot. Сейчас вы находитесь в меню")
-		msg.ReplyMarkup = replyMarkup
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Привет! Я %sBot. Сейчас вы находитесь в меню", bot.Self.FirstName))
+	msg.ReplyMarkup = replyMarkup
 
-		bot.Send(msg)
-	}
+	bot.Send(msg)
+
 }
 
 func handleSocialMedia(update tgbotapi.Update, bot *tgbotapi.BotAPI, config *BotConfig) {
